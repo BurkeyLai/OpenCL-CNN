@@ -43,14 +43,10 @@ ConvLayer* convlayer(int numberOfFilters, int filtdim)
 	{
 		Filter filter;
 		for (int j = 0; j != filtdim; ++j) {
-
 			for (int k = 0; k != filtdim; ++k)
 				filter.weights[k*filtdim + j] = getRandom(-0.2, 0.2);
-
-
 		}
 		filter.bias = 0.1;//getRandom(-0.3, 0.3);
-
 		layer->filters[i] = filter;
 	}
 	return layer;

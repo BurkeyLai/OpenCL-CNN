@@ -153,13 +153,13 @@ int main(void)
 		netVec = { 169 * 7, 10 };
 		m_nn.createFullyConnectedNN(netVec, 0, 32);
 
-/*
+
 		m_nn.train(inputs, targets, testinputs, testtargets, 1000000);
 
 		std::cout << "trained in : " << timer.getTimeMilliseconds() / 1000.0 << " s" << std::endl;
 
 
-
+/*
 		////////////////////////////////////////////////////////////////////////////////
 
 		/// FCNN
