@@ -4,8 +4,34 @@
 #include "OpenCL.h"
 #include "err_code.h"
 
+void dumpBufferNodes(cl_mem buffer, int nodesnum)
+{
+	Node bufdata[nodesnum];
 
+	clEnqueueReadBuffer(OpenCL::clqueue, buffer, CL_TRUE, 0, sizeof(Node) * nodesnum, bufdata, 0, NULL, NULL);
 
+	printf("Number of nodes: %d\n", nodesnum);
+	for (int i = 0; i < nodesnum; i++) {
+		printf("bufdata[%d].output: %f\n", i, bufdata[i].output);
+		// for (int j = 0; j < 1200; j++) {
+		// 	if (j % 10 == 0) printf("\n");
+		// 	printf("weights[%d]: %f\t", j, bufdata[i].weights[j]);
+		// }
+		// printf("\n");
+	}
+}
+
+void dumpBuffer(cl_mem buffer, int size)
+{
+	float bufdata[size];
+
+	clEnqueueReadBuffer(OpenCL::clqueue, buffer, CL_TRUE, 0, sizeof(float) * size, bufdata, 0, NULL, NULL);
+
+	printf("Size: %d\n", size);
+	for (int i = 0; i < size; i++) {
+		printf("bufdata[%d]: %f\n", i, bufdata[i]);
+	}
+}
 
 ///Create the neural net as a vector of layers
 void ConvNN::createConvNN(int numoffilters, int filtdim, int inpdim)
@@ -16,10 +42,10 @@ void ConvNN::createConvNN(int numoffilters, int filtdim, int inpdim)
 
 
 	///Create memory buffers
-	inputdim = inpdim;
-	filterdim = filtdim;
-	featmapdim = inputdim - filterdim + 1;
-	pooldim = ((featmapdim - 2) / 2) + 1;
+	inputdim = inpdim; // 7
+	filterdim = filtdim; // 7
+	featmapdim = inputdim - filterdim + 1; // 26
+	pooldim = ((featmapdim - 2) / 2) + 1; // 13
 
 	d_InputBuffer = clCreateBuffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(float) * inputdim * inputdim, NULL, &err);
 
@@ -27,7 +53,7 @@ void ConvNN::createConvNN(int numoffilters, int filtdim, int inpdim)
 	err = clEnqueueWriteBuffer(OpenCL::clqueue, d_FiltersBuffer, CL_TRUE, 0, sizeof(Filter) * convLayer.numOfFilters, convLayer.filters, 0, NULL, NULL);
 	checkError(err, "Finding platforms");
 
-	d_FeatMapBuffer = clCreateBuffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(float) * featmapdim * featmapdim * convLayer.numOfFilters, NULL, &err);
+	d_FeatMapBuffer = clCreateBuffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(float) * featmapdim * featmapdim * convLayer.numOfFilters, NULL, &err); // 26 x 26 x 7
 	d_PoolBuffer = clCreateBuffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(float) * pooldim * pooldim * convLayer.numOfFilters, NULL, &err);
 	d_PoolIndexBuffer = clCreateBuffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(float) * pooldim * pooldim * convLayer.numOfFilters, NULL, &err);
 	d_deltasBuffer = clCreateBuffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(float) * featmapdim * featmapdim * convLayer.numOfFilters, NULL, &err);
@@ -89,7 +115,7 @@ void ConvNN::createFullyConnectedNN(std::vector<cl_int> &newNetVec, bool onlyFCN
 
 	for (int i = 1; i < h_layers.size(); i++) {
 		tempbuf = clCreateBuffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(Node) * h_layers[i].numOfNodes, NULL, &err);
-		err = clEnqueueWriteBuffer(OpenCL::clqueue, tempbuf, CL_TRUE, 0, sizeof(Node) * h_layers[i].numOfNodes, h_layers[0].nodes, 0, NULL, NULL);
+		err = clEnqueueWriteBuffer(OpenCL::clqueue, tempbuf, CL_TRUE, 0, sizeof(Node) * h_layers[i].numOfNodes, h_layers[i].nodes, 0, NULL, NULL);
 		d_layersBuffers.push_back(tempbuf);
 	}
 
@@ -236,7 +262,7 @@ void ConvNN::train(std::vector<std::vector<float>> &inputs, std::vector<std::vec
 		err = clEnqueueNDRangeKernel(OpenCL::clqueue, backpropcnnKern, 3, NULL, 
 			global_backpropcnn_size, NULL, 0, NULL, NULL);
 
-		if (e % 50000 == 0 && e!=0) {
+		if (e % 10000 == 0 && e!=0) {
 			trainingAccuracy(testinputs, testtargets, 2000, 0);
 		}
 	}
@@ -262,6 +288,8 @@ void ConvNN::computeConvolution() {
 	size_t global_conv_size[3] = {(size_t)featmapdim, (size_t)featmapdim, (size_t)convLayer.numOfFilters};
 	err = clEnqueueNDRangeKernel(OpenCL::clqueue, convKern, 3, NULL, 
 		global_conv_size, NULL, 0, NULL, NULL);
+
+	// dumpBuffer(d_FeatMapBuffer, featmapdim * featmapdim * convLayer.numOfFilters);
 }
 
 void ConvNN::pooling() {
@@ -281,6 +309,8 @@ void ConvNN::pooling() {
 	size_t global_pool_size[3] = {(size_t)pooldim, (size_t)pooldim, (size_t)convLayer.numOfFilters};
 	err = clEnqueueNDRangeKernel(OpenCL::clqueue, poolKern, 3, NULL, 
 		global_pool_size, NULL, 0, NULL, NULL);
+
+	// dumpBuffer(d_PoolBuffer, pooldim * pooldim * convLayer.numOfFilters);
 }
 
 void ConvNN::cnntoFcnn() {
@@ -301,12 +331,14 @@ void ConvNN::cnntoFcnn() {
 		size_t global_cnntofcnn_size[3] = {(size_t)pooldim, (size_t)pooldim, (size_t)convLayer.numOfFilters};
 		err = clEnqueueNDRangeKernel(OpenCL::clqueue, cnnToFcnnKern, 3, NULL, 
 			global_cnntofcnn_size, NULL, 0, NULL, NULL);
+
+		// dumpBufferNodes(d_layersBuffers[0], pooldim * pooldim * convLayer.numOfFilters);
 	}
 }
 
 //Computes the output of the net given an array of inputs
 void ConvNN::computeOutputofNN() {
-	for (int i = 1; i<h_layers.size(); i++) {
+	for (int i = 1; i<h_layers.size(); i++) { // h_layers.size() = 2
 		int sf = 0;
 		if ((i == h_layers.size() - 1) && (softflag == 1))
 			sf = 1;
@@ -325,7 +357,9 @@ void ConvNN::computeOutputofNN() {
 		err = clEnqueueNDRangeKernel(OpenCL::clqueue, compoutKern, 1, NULL, 
 			global_compout_size, NULL, 0, NULL, NULL);
 
-		if ((i == h_layers.size() - 1) && (softflag==1) ) {
+		// dumpBufferNodes(d_layersBuffers[i], h_netVec[i]);
+
+		if ((i == h_layers.size() - 1) && (softflag == 1)) {
 			
 			// softmaxKern.setArg(0, d_layersBuffers[i]);
 			// softmaxKern.setArg(1, h_layers.back().numOfNodes);
@@ -358,16 +392,17 @@ void ConvNN::trainingAccuracy(std::vector<std::vector<float>> &testinputs, std::
 
 		//(OpenCL::clqueue).enqueueReadBuffer(d_layersBuffers.back(), CL_TRUE, 0, sizeof(Node)*h_layers.back().numOfNodes, bufdata);
 		clEnqueueReadBuffer(OpenCL::clqueue, d_layersBuffers.back(), CL_TRUE, 0, sizeof(Node) * h_layers.back().numOfNodes, bufdata, 0, NULL, NULL);
+		// dumpBufferNodes(d_layersBuffers.back(), h_layers.back().numOfNodes);
+		
 		//findmax
 		float max = 0;
 		int maxindex = 0;
 		for (int j = 0; j < h_netVec.back(); j++) {
-			printf("bufdata[%d].output: %f\n", j, bufdata[j].output);
 			if (bufdata[j].output > max) {
 				max = bufdata[j].output;
-				std::cout << "max:      " << max << std::endl;
+				// std::cout << "max:      " << max << std::endl;
 				maxindex = j;
-				std::cout << "maxindex: " << maxindex << std::endl;
+				// std::cout << "maxindex: " << maxindex << std::endl;
 			}
 			
 		}
@@ -431,6 +466,8 @@ void ConvNN::forwardFCNN(std::vector<float> &input) {
 		global_cnntofcnn_size, NULL, 0, NULL, NULL);
 	computeOutputofNN();
 }
+
+
 
 
 

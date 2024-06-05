@@ -44,6 +44,10 @@ void read_batch(string filename, vector<Mat> &vec, Mat &label) {
 								channels.push_back(tp);
 						}
 						merge(channels, fin_img); // cv::merge
+						// dump images
+						// char save_img_name[64];
+						// sprintf(save_img_name, "dumped_jpg/test%d.jpg", i);
+						// cv::imwrite(save_img_name, fin_img);
 						vec.push_back(fin_img);
 						label.ATD(0, i) = (float)tplabel;
 				}
@@ -163,38 +167,39 @@ void read_CIFAR10(Mat &trainX, Mat &testX, Mat &trainY, Mat &testY) {
 		label1.copyTo(subView);
 
 		
-		roi = cv::Rect(mt1.cols * 1, 0, mt1.cols, trainX.rows); // 10000, 0, 10000, 1024
+		roi = cv::Rect(mt2.cols * 1, 0, mt2.cols, trainX.rows); // 10000, 0, 10000, 1024
 		subView = trainX(roi);
 		mt2.copyTo(subView);
-		roi = cv::Rect(label1.cols * 1, 0, label1.cols, 1);
+		roi = cv::Rect(label2.cols * 1, 0, label2.cols, 1);
 		subView = trainY(roi);
 		label2.copyTo(subView);
 
 		
-		roi = cv::Rect(mt1.cols * 2, 0, mt1.cols, trainX.rows);
+		roi = cv::Rect(mt3.cols * 2, 0, mt3.cols, trainX.rows);
 		subView = trainX(roi);
 		mt3.copyTo(subView);
-		roi = cv::Rect(label1.cols * 2, 0, label1.cols, 1);
+		roi = cv::Rect(label3.cols * 2, 0, label3.cols, 1);
 		subView = trainY(roi);
 		label3.copyTo(subView);
 
 		
-		roi = cv::Rect(mt1.cols * 3, 0, mt1.cols, trainX.rows);
+		roi = cv::Rect(mt4.cols * 3, 0, mt4.cols, trainX.rows);
 		subView = trainX(roi);
 		mt4.copyTo(subView);
-		roi = cv::Rect(label1.cols * 3, 0, label1.cols, 1);
+		roi = cv::Rect(label4.cols * 3, 0, label4.cols, 1);
 		subView = trainY(roi);
 		label4.copyTo(subView);
 	
 
 		
-		roi = cv::Rect(mt1.cols * 4, 0, mt1.cols, trainX.rows);
+		roi = cv::Rect(mt5.cols * 4, 0, mt5.cols, trainX.rows);
 		subView = trainX(roi);
 		mt5.copyTo(subView);
-		roi = cv::Rect(label1.cols * 4, 0, label1.cols, 1);
+		roi = cv::Rect(label5.cols * 4, 0, label5.cols, 1);
 		subView = trainY(roi);
 		label5.copyTo(subView);
-	
+
+
 
 		mtt.copyTo(testX);
 		labelt.copyTo(testY);

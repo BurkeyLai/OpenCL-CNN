@@ -150,7 +150,7 @@ int main(void)
 
 		//todo::many filters  3d kernel
 		std::vector<int> netVec;
-		netVec = { 169 * 7, 10 };
+		netVec = { 169 * 7, 10 }; // 13 * 13 * 7, 10 = 1183, 10, 13 = pooldim
 		m_nn.createFullyConnectedNN(netVec, 0, 32);
 
 

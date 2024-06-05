@@ -1,6 +1,6 @@
 
 
-__kernel void convolve(global float *image, global Filter* filters, global float * featMap,int filterWidth,int inWidth,int featmapdim){
+__kernel void convolve(global float *image, global Filter* filters, global float * featMap, int filterWidth, int inWidth, int featmapdim){
          
     const int xIn=get_global_id(0);//cols
     const int yIn=get_global_id(1);//rows
