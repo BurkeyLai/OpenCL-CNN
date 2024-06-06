@@ -43,7 +43,7 @@ float inline sigmoid(float x)
 	return 1 / (1 + exp(-x));
 }
 
-float inline devsigmoid(float x)
+float inline devsigmoid(float x) // sigmoid 函數的導數
 {
 	
 	return (x*(1-x));

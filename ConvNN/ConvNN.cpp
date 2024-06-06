@@ -187,11 +187,11 @@ void ConvNN::train(std::vector<std::vector<float>> &inputs, std::vector<std::vec
 				// bakckprophidKern.setArg(2, d_layersBuffers[l + 1]);
 				// bakckprophidKern.setArg(3,h_netVec[l+1]);
 				// bakckprophidKern.setArg(4, lr);
-				err = clSetKernelArg(backpropoutKern, 0, sizeof(cl_mem), &d_layersBuffers[l]);
-				err = clSetKernelArg(backpropoutKern, 1, sizeof(cl_mem), &d_layersBuffers[l - 1]);
-				err = clSetKernelArg(backpropoutKern, 2, sizeof(cl_mem), &d_layersBuffers[l + 1]);
-				err = clSetKernelArg(backpropoutKern, 3, sizeof(cl_int), &h_netVec[l+1]);
-				err = clSetKernelArg(backpropoutKern, 4, sizeof(float), &lr);
+				err = clSetKernelArg(bakckprophidKern, 0, sizeof(cl_mem), &d_layersBuffers[l]);
+				err = clSetKernelArg(bakckprophidKern, 1, sizeof(cl_mem), &d_layersBuffers[l - 1]);
+				err = clSetKernelArg(bakckprophidKern, 2, sizeof(cl_mem), &d_layersBuffers[l + 1]);
+				err = clSetKernelArg(bakckprophidKern, 3, sizeof(cl_int), &h_netVec[l+1]);
+				err = clSetKernelArg(bakckprophidKern, 4, sizeof(float), &lr);
 
 				// err = (OpenCL::clqueue).enqueueNDRangeKernel(bakckprophidKern, cl::NullRange,
 				// 	cl::NDRange(h_netVec[l]),
