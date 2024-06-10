@@ -50,6 +50,7 @@ void ConvNN::createConvNN(int numoffilters, int filtdim, int inpdim)
 	d_InputBuffer = clCreateBuffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(float) * inputdim * inputdim, NULL, &err);
 
 	d_FiltersBuffer = clCreateBuffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(Filter) * convLayer.numOfFilters, NULL, &err);
+	// host data(convLayer.filters) write to device buffer(d_FiltersBuffer)
 	err = clEnqueueWriteBuffer(OpenCL::clqueue, d_FiltersBuffer, CL_TRUE, 0, sizeof(Filter) * convLayer.numOfFilters, convLayer.filters, 0, NULL, NULL);
 	checkError(err, "Finding platforms");
 
@@ -127,7 +128,8 @@ void ConvNN::createFullyConnectedNN(std::vector<cl_int> &newNetVec, bool onlyFCN
 	bakckprophidKern = clCreateKernel(OpenCL::clprogram, "backprophid", &err);
 }
 
-void ConvNN::train(std::vector<std::vector<float>> &inputs, std::vector<std::vector<float>> &targets, std::vector<std::vector<float>> &testinputs, std::vector<float> &testtargets ,int epoches) {
+void ConvNN::train(std::vector<std::vector<float>> &inputs, std::vector<std::vector<float>> &targets, std::vector<std::vector<float>> &testinputs, std::vector<float> &testtargets ,int epoches)
+{
 	int i = 0;
 
 	for (int e = 0; e<epoches; e++) {
@@ -292,7 +294,8 @@ void ConvNN::computeConvolution() {
 	// dumpBuffer(d_FeatMapBuffer, featmapdim * featmapdim * convLayer.numOfFilters);
 }
 
-void ConvNN::pooling() {
+void ConvNN::pooling()
+{
 	// poolKern.setArg(0, d_FeatMapBuffer);
 	// poolKern.setArg(1, d_PoolBuffer);
 	// poolKern.setArg(2, d_PoolIndexBuffer);
@@ -313,10 +316,11 @@ void ConvNN::pooling() {
 	// dumpBuffer(d_PoolBuffer, pooldim * pooldim * convLayer.numOfFilters);
 }
 
-void ConvNN::cnntoFcnn() {
+void ConvNN::cnntoFcnn()
+{
 
 	//pass output of cnn to fcnn
-	for (int i = 0; i < convLayer.numOfFilters; i++) {
+	// for (int i = 0; i < convLayer.numOfFilters; i++) {
 		// cnnToFcnnKern.setArg(0, d_PoolBuffer);
 		// cnnToFcnnKern.setArg(1, d_layersBuffers[0]);
 		// cnnToFcnnKern.setArg(2, pooldim);
@@ -327,17 +331,18 @@ void ConvNN::cnntoFcnn() {
 		err = clSetKernelArg(cnnToFcnnKern, 0, sizeof(cl_mem), &d_PoolBuffer);
 		err = clSetKernelArg(cnnToFcnnKern, 1, sizeof(cl_mem), &d_layersBuffers[0]);
 		err = clSetKernelArg(cnnToFcnnKern, 2, sizeof(int), &pooldim);
-		err = clSetKernelArg(cnnToFcnnKern, 3, sizeof(int), &i);
+		// err = clSetKernelArg(cnnToFcnnKern, 3, sizeof(int), &i);
 		size_t global_cnntofcnn_size[3] = {(size_t)pooldim, (size_t)pooldim, (size_t)convLayer.numOfFilters};
 		err = clEnqueueNDRangeKernel(OpenCL::clqueue, cnnToFcnnKern, 3, NULL, 
 			global_cnntofcnn_size, NULL, 0, NULL, NULL);
 
 		// dumpBufferNodes(d_layersBuffers[0], pooldim * pooldim * convLayer.numOfFilters);
-	}
+	// }
 }
 
 //Computes the output of the net given an array of inputs
-void ConvNN::computeOutputofNN() {
+void ConvNN::computeOutputofNN()
+{
 	for (int i = 1; i<h_layers.size(); i++) { // h_layers.size() = 2
 		int sf = 0;
 		if ((i == h_layers.size() - 1) && (softflag == 1))
@@ -375,9 +380,8 @@ void ConvNN::computeOutputofNN() {
 	}
 }
 
-void ConvNN::trainingAccuracy(std::vector<std::vector<float>> &testinputs, std::vector<float> &testtargets,int num,bool onlyfcnn){
-
-
+void ConvNN::trainingAccuracy(std::vector<std::vector<float>> &testinputs, std::vector<float> &testtargets,int num,bool onlyfcnn)
+{
 	float testerrors = 0;
 
 
@@ -432,7 +436,8 @@ void ConvNN::trainingAccuracy(std::vector<std::vector<float>> &testinputs, std::
 
 
 
-void ConvNN::forward(std::vector<float> &input) {
+void ConvNN::forward(std::vector<float> &input)
+{
 	// (OpenCL::clqueue).enqueueWriteBuffer(d_InputBuffer, CL_TRUE,0, sizeof(float)*inputdim*inputdim, input.data());
 	err = clEnqueueWriteBuffer(OpenCL::clqueue, d_InputBuffer, CL_TRUE, 0, sizeof(float) * inputdim * inputdim, input.data(), 0, NULL, NULL);
 	checkError(err, "EnqueueWriteBuffer");
@@ -446,7 +451,8 @@ void ConvNN::forward(std::vector<float> &input) {
 	computeOutputofNN();
 }
 
-void ConvNN::forwardFCNN(std::vector<float> &input) {
+void ConvNN::forwardFCNN(std::vector<float> &input)
+{
 	// (OpenCL::clqueue).enqueueWriteBuffer(d_InputBuffer, CL_TRUE, 0, sizeof(float)*inputdim*inputdim, input.data());
 	// cnnToFcnnKern.setArg(0, d_InputBuffer);
 	// cnnToFcnnKern.setArg(1, d_layersBuffers[0]);
@@ -567,7 +573,8 @@ void ConvNN::trainFCNN(std::vector<std::vector<float>> &inputs, std::vector<std:
 
 }
 */
-void ConvNN::calculateError(std::vector<float> desiredout) {
+void ConvNN::calculateError(std::vector<float> desiredout)
+{
 	Node bufdata[10];
 	// (OpenCL::clqueue).enqueueReadBuffer(d_layersBuffers.back(), CL_TRUE, 0, sizeof(Node)*h_layers.back().numOfNodes, bufdata);
 	clEnqueueReadBuffer(OpenCL::clqueue, d_layersBuffers.back(), CL_TRUE, 0, sizeof(Node) * h_layers.back().numOfNodes, bufdata, 0, NULL, NULL);

@@ -145,7 +145,7 @@ int main(void)
 		//////////////////////////////////////////////////////////
 
 		ConvNN m_nn;
-		m_nn.createConvNN(7, 7, 32);//num of filters,filterdim,imagedim
+		m_nn.createConvNN(7, 7, 32);//num of filters, filterdim, imagedim
 
 
 		//todo::many filters  3d kernel
