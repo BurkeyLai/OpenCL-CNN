@@ -195,6 +195,9 @@ int main(void)
 	{
 		std::cout << "An exception occurred. Exception Nr. " << e << '\n';
 	}
-
-
+	
+	// 在程序結束時清理 OpenCL 資源
+	OpenCL::cleanup_OpenCL();
+	
+	return 0;
 }

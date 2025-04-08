@@ -15,7 +15,8 @@ class ConvNN {
 
 public:
 
-
+	// 添加析構函數
+	~ConvNN();
 
 	void createConvNN(int numoffilters, int filtdim, int inpdim);
 	void createFullyConnectedNN(std::vector<cl_int> &newNetVec, bool onlyFCNN, int inpdim);
@@ -34,7 +35,7 @@ public:
 
 	float lr = 0.001;
 
-	int softflag = 0;
+	int softflag = 1;
 
 
 private:

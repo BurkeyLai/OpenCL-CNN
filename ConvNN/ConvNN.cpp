@@ -1,8 +1,37 @@
-
-
 #include "ConvNN.h"
 #include "OpenCL.h"
 #include "err_code.h"
+
+// 添加析構函數實現
+ConvNN::~ConvNN() {
+	// 釋放 OpenCL 緩衝區
+	if (d_InputBuffer) clReleaseMemObject(d_InputBuffer);
+	if (d_FiltersBuffer) clReleaseMemObject(d_FiltersBuffer);
+	if (d_FeatMapBuffer) clReleaseMemObject(d_FeatMapBuffer);
+	if (d_PoolBuffer) clReleaseMemObject(d_PoolBuffer);
+	if (d_PoolIndexBuffer) clReleaseMemObject(d_PoolIndexBuffer);
+	if (d_targetBuffer) clReleaseMemObject(d_targetBuffer);
+	if (d_deltasBuffer) clReleaseMemObject(d_deltasBuffer);
+	if (d_rotatedImgBuffer) clReleaseMemObject(d_rotatedImgBuffer);
+	
+	// 釋放層緩衝區
+	for (auto buffer : d_layersBuffers) {
+		if (buffer) clReleaseMemObject(buffer);
+	}
+	
+	// 釋放 OpenCL 核心
+	if (convKern) clReleaseKernel(convKern);
+	if (poolKern) clReleaseKernel(poolKern);
+	if (reluKern) clReleaseKernel(reluKern);
+	if (deltasKern) clReleaseKernel(deltasKern);
+	if (backpropcnnKern) clReleaseKernel(backpropcnnKern);
+	if (compoutKern) clReleaseKernel(compoutKern);
+	if (backpropoutKern) clReleaseKernel(backpropoutKern);
+	if (bakckprophidKern) clReleaseKernel(bakckprophidKern);
+	if (cnnToFcnnKern) clReleaseKernel(cnnToFcnnKern);
+	if (rotate180Kern) clReleaseKernel(rotate180Kern);
+	if (softmaxKern) clReleaseKernel(softmaxKern);
+}
 
 void dumpBufferNodes(cl_mem buffer, int nodesnum)
 {
@@ -38,7 +67,10 @@ void ConvNN::createConvNN(int numoffilters, int filtdim, int inpdim)
 {
 	///Create the input layer
 	cl_int err;
-	convLayer = *convlayer(numoffilters, filtdim);
+	ConvLayer* tempConvLayer = convlayer(numoffilters, filtdim);
+	convLayer = *tempConvLayer;
+	// 釋放臨時變量
+	releaseConvLayer(tempConvLayer);
 
 
 	///Create memory buffers
@@ -90,12 +122,14 @@ void ConvNN::createFullyConnectedNN(std::vector<cl_int> &newNetVec, bool onlyFCN
 	h_netVec = newNetVec;
 	Layer *inputLayer = layer(h_netVec[0], 0);
 	h_layers.push_back(*inputLayer);
+	releaseLayer(inputLayer);
 
 	///Create the other layers
 	for (unsigned int i = 1; i < h_netVec.size(); i++)
 	{
 		Layer *hidlayer = layer(h_netVec[i], h_netVec[i - 1]);
 		h_layers.push_back(*hidlayer);
+		releaseLayer(hidlayer);
 	}
 
 	///Create memory buffers

@@ -157,6 +157,27 @@ uint32_t OpenCL::initialize_OpenCL() {
 	return 0;
 }
 
+// 添加清理 OpenCL 資源的函數實現
+void OpenCL::cleanup_OpenCL() {
+    // 釋放命令隊列
+    if (OpenCL::clqueue) {
+        clReleaseCommandQueue(OpenCL::clqueue);
+        OpenCL::clqueue = NULL;
+    }
+    
+    // 釋放程序
+    if (OpenCL::clprogram) {
+        clReleaseProgram(OpenCL::clprogram);
+        OpenCL::clprogram = NULL;
+    }
+    
+    // 釋放上下文
+    if (OpenCL::clcontext) {
+        clReleaseContext(OpenCL::clcontext);
+        OpenCL::clcontext = NULL;
+    }
+}
+
 
 
 

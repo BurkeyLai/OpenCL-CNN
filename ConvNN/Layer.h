@@ -47,6 +47,10 @@ typedef struct ConvLayer {
 Layer* layer(int numberOfNodes, int numberOfWeights);
 ConvLayer* convlayer(int numberOfFilters, int filtdim);
 
+// 添加釋放記憶體的函數聲明
+void releaseLayer(Layer* layer);
+void releaseConvLayer(ConvLayer* layer);
+
 
 
 

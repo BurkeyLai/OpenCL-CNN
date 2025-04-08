@@ -17,6 +17,7 @@ public:
 	static cl_context clcontext;
 
 	static uint32_t initialize_OpenCL();
+	static void cleanup_OpenCL();
 
 
 

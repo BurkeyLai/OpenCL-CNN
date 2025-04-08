@@ -1,5 +1,3 @@
-
-
 #include "Layer.h"
 
 
@@ -50,4 +48,18 @@ ConvLayer* convlayer(int numberOfFilters, int filtdim)
 		layer->filters[i] = filter;
 	}
 	return layer;
+}
+
+// 添加釋放 Layer 記憶體的函數
+void releaseLayer(Layer* layer) {
+    if (layer) {
+        delete layer;
+    }
+}
+
+// 添加釋放 ConvLayer 記憶體的函數
+void releaseConvLayer(ConvLayer* layer) {
+    if (layer) {
+        delete layer;
+    }
 }

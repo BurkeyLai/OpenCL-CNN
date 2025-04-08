@@ -1,5 +1,3 @@
-
-
 __kernel void convolve(
     global float* image, 
     global Filter* filters, 
@@ -31,8 +29,8 @@ __kernel void convolve(
     float sum = 0;
     for (int r = 0; r < filterWidth; r++){
         for (int c = 0; c < filterWidth; c++){
-            sum += filters[z].weights[c * filterWidth + r] * image[(xIn + c) + inWidth * (yIn + r)];
-        //sum+= filters[z].weights[(filterWidth-c)+ filterWidth*(filterWidth-r)]*image[(xIn+c)+inWidth *(yIn+r)];
+            sum += filters[z].weights[c + filterWidth * r] * image[(xIn + c) + inWidth * (yIn + r)];
+            // sum+= filters[z].weights[(filterWidth-c)+ filterWidth*(filterWidth-r)]*image[(xIn+c)+inWidth *(yIn+r)];
         }
     }
 
@@ -46,7 +44,7 @@ __kernel void convolve(
         case 2: featMap[(xIn + yIn * featmapdim + z * featmapdim * featmapdim)] = relu(sum);break;
     }
 }
- 
+
 __kernel void pooling(
     global float* prevfeatMap,
     global float* poolMap,
@@ -72,8 +70,7 @@ __kernel void pooling(
     poolMap[(xIn + yIn * pooldim + z * pooldim * pooldim)] = max;
     indexes[(xIn + yIn * pooldim + z * pooldim * pooldim)] = index;
 }
- 
- 
+
 __kernel void deltas(
     global Node* nodes,
     global Node* nextnodes,
@@ -117,9 +114,7 @@ __kernel void rotatemat(
 
     destin[xIn + dim * yIn] = source[(dim - xIn) + dim * (dim - yIn)];
 }
- 
- 
-   
+
 __kernel void backpropcnn(
     global float* featMap,
     global float* deltas,
@@ -147,7 +142,6 @@ __kernel void backpropcnn(
 }
 
 
-   
 //__kernel void cnntoFcnn(
 //    global float* poolMap,
 //    global Node* nodes,

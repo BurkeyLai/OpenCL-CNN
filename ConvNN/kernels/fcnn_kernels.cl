@@ -51,7 +51,8 @@ __kernel void backprophid(
     const int i = get_global_id(0);
 
 	// 遍歷下一層的每個節點，將當前節點的誤差項累加為 delta += nextnodes[j].delta * nextnodes[j].weights[i]，即將下一層節點的誤差項乘以對應的權重加到 delta 中。
-    float delta = 0;
+    // $\frac{\partial{L}}{\partial{h}} = \frac{\partial{L}}{\partial{\hat{y}}}\frac{\partial{\hat{y}}}{\partial{h}} =  (y - \hat{y})W_b$。
+	float delta = 0;
     for (int j = 0; j != nextnumNodes; j++)
         delta += nextnodes[j].delta * nextnodes[j].weights[i];
         // delta *= nodes[i].output * (1 - nodes[i].output);
@@ -63,7 +64,7 @@ __kernel void backprophid(
 	}
 
    	nodes[i].delta = delta;
-
+	// $\Delta{W} = \eta\frac{\partial{L}}{\partial{h}}\frac{\partial{h}}{\partial{W}}$。
     for (int j = 0; j != nodes[i].numberOfWeights; j++)
         nodes[i].weights[j] -= a * delta * prevnodes[j].output;
 }
@@ -84,14 +85,19 @@ __kernel void backpropout(
 	if(softflag == 1){
 		delta = nodes[i].output - targets[i];
 	} else{
-		switch(actflag){ // 每個節點的誤差項 delta
+		// 每個節點的誤差項 delta。
+		// δi = (yi − ti) ⋅ σ′(yi)。
+		// $\frac{\partial{L}}{\partial{\hat{y}}} = y -\hat{y}$。
+		switch(actflag){ 
 			case 0: delta = (nodes[i].output - targets[i]) * devsigmoid(nodes[i].output);break;
 			case 1: delta = (nodes[i].output - targets[i]) * devtanh(nodes[i].output);break;
-			case 2: delta = nodes[i].output - targets[i] * devrelu(nodes[i].output);break;
+			case 2: delta = (nodes[i].output - targets[i]) * devrelu(nodes[i].output);break;
 		}
 	}
 
-	// 用學習率 a、誤差項 delta 和前一層節點的輸出 prevnodes[j].output 來更新權重
+	// 用學習率 a、誤差項 delta 和前一層節點的輸出 prevnodes[j].output 來更新權重。
+	// wij = wij − η ⋅ δi ⋅ xj。
+	// $\Delta{W} = \eta\frac{\partial{L}}{\partial{\hat{y}}}\frac{\partial{\hat{y}}}{\partial{W}}$。
 	for (int j = 0; j != nodes[i].numberOfWeights; j++)
 		nodes[i].weights[j] -= a * delta * prevnodes[j].output;
 
