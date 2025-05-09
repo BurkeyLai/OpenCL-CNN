@@ -5,37 +5,23 @@
 #include <iostream>
 #include <fstream>
 
-
 using namespace cv;
-
-
-
-
-
 
 int ReverseInt(int i)
 {
-
 	unsigned char ch1, ch2, ch3, ch4;
 	ch1 = i & 255;
 	ch2 = (i >> 8) & 255;
 	ch3 = (i >> 16) & 255;
 	ch4 = (i >> 24) & 255;
 	return((int)ch1 << 24) + ((int)ch2 << 16) + ((int)ch3 << 8) + ch4;
-
 }
 
-
-
 void read_Mnist(std::string filename, std::vector< std::vector<float>> &vec)
-
 {
-
 	std::ifstream file(filename, std::ios::binary);
 	if (file.is_open())
-
 	{
-
 		int magic_number = 0;
 		int number_of_images = 0;
 		int n_rows = 0;
@@ -51,43 +37,44 @@ void read_Mnist(std::string filename, std::vector< std::vector<float>> &vec)
 		n_rows = ReverseInt(n_rows);
 
 		file.read((char*)&n_cols, sizeof(n_cols));
-		n_cols = ReverseInt(n_cols); 
-			for (int i = 0; i < number_of_images; ++i)
-			{
+		n_cols = ReverseInt(n_cols);
+		
+		printf("File Name: %s, Magic Number: %d, Numbers: %d, Row: %d, Col: %d\n", filename.c_str(), magic_number, number_of_images, n_rows, n_cols);
+		
+		for (int i = 0; i < number_of_images; ++i) {
+			std::vector<float> tp;
+			cv::Mat dump_mat = Mat::zeros(n_rows, n_cols, CV_8UC1);
 
-				std::vector<float> tp;
+			for (int r = 0; r < n_rows; ++r) {
+				for (int c = 0; c < n_cols; ++c) {
+					unsigned char temp = 0;
+					file.read((char*)&temp, sizeof(temp));
+					// tp.push_back(((float)temp/255.0)*2-1); // x=(x/255)*range =min
+					// tp.push_back(((float)temp / 255.0));
+					tp.push_back(((float)temp));
 
-				for (int r = 0; r < n_rows; ++r)
-				{
-					for (int c = 0; c < n_cols; ++c)
-					{
-
-						unsigned char temp = 0;
-						file.read((char*)&temp, sizeof(temp));
-						//tp.push_back(((float)temp/255.0)*2-1); // x=(x/255)*range =min
-						tp.push_back(((float)temp / 255.0));
-
-					}
-
+					dump_mat.at<uchar>(r, c) = (float)temp;
 				}
+            }
 
-				vec.push_back(tp);
-
+			// dump images
+			{
+				char save_img_name[64];
+				sprintf(save_img_name, "dumped_jpg/test%d.jpg", i);
+				cv::imwrite(save_img_name, dump_mat);
 			}
 
-	}
+			vec.push_back(tp);
 
+			if (i == 9) break;
+		}
+	}
 }
 
-
-
-void read_Mnist(std::string filename, std::vector<cv::Mat> &vec) {
-
+void read_Mnist(std::string filename, std::vector<cv::Mat> &vec)
+{
 	std::ifstream file(filename, std::ios::binary);
-	if (file.is_open())
-
-	{
-
+	if (file.is_open()) {
 		int magic_number = 0;
 		int number_of_images = 0;
 		int n_rows = 0;
@@ -95,51 +82,34 @@ void read_Mnist(std::string filename, std::vector<cv::Mat> &vec) {
 
 		file.read((char*)&magic_number, sizeof(magic_number));
 		magic_number = ReverseInt(magic_number); 
-			file.read((char*)&number_of_images, sizeof(number_of_images));
+		file.read((char*)&number_of_images, sizeof(number_of_images));
 		number_of_images = ReverseInt(number_of_images);
 		file.read((char*)&n_rows, sizeof(n_rows));
 		n_rows = ReverseInt(n_rows);
 		file.read((char*)&n_cols, sizeof(n_cols));
 		n_cols = ReverseInt(n_cols);
 
-		for (int i = 0; i < number_of_images; ++i)
-		{
-
+		for (int i = 0; i < number_of_images; ++i) {
 			cv::Mat tp = Mat::zeros(n_rows, n_cols, CV_8UC1);
 
-			for (int r = 0; r < n_rows; ++r)
-			{
-				for (int c = 0; c < n_cols; ++c)
-
-				{
-
+			for (int r = 0; r < n_rows; ++r) {
+				for (int c = 0; c < n_cols; ++c) {
 					unsigned char temp = 0;
 					file.read((char*)&temp, sizeof(temp));
 					tp.at<uchar>(r, c) = (float)temp/255.0;
-
 				}
-
 			}
 
 			vec.push_back(tp);
-
 		}
-
 	}
-
 }
 
-
-
-
 void read_Mnist_Label(std::string filename, std::vector<std::vector<float>> &vec,std::vector<float> &testtargets,bool testflag)
-
 {
 
 	std::ifstream file(filename, std::ios::binary);
-	if (file.is_open())
-
-	{
+	if (file.is_open()) {
 
 		int magic_number = 0;
 		int number_of_images = 0;
@@ -187,14 +157,9 @@ void read_Mnist_Label(std::string filename, std::vector<std::vector<float>> &vec
 				//testtargets.push_back((float)temp>5 ? 1 : 0);
 
 			}
-		
-		
 		}
-
 	}
-
 }
-
 
 void printInput(std::vector<float> &inputs)
 {

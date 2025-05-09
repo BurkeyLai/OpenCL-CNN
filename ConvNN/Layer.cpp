@@ -8,8 +8,15 @@ float getRandom(float lowerbound, float upperbound)
 	return f;
 }
 
+float xavier_init(int fan_in, int fan_out) {
+    float limit = sqrt(6.0f / (fan_in + fan_out));
+    return ((float)rand() / RAND_MAX) * 2.0f * limit - limit;
+}
 
-
+float he_init(int fan_in) {
+    float stddev = sqrt(2.0f / fan_in);
+    return stddev * ((float)rand() / RAND_MAX * 2.0f - 1.0f);
+}
 
 ///Creates a hidden or output layer
 Layer* layer(int numberOfNodes, int numberOfWeights)
@@ -25,7 +32,9 @@ Layer* layer(int numberOfNodes, int numberOfWeights)
 
 		node.output = 0.0;
 		for (int j = 0; j < numberOfWeights; j++)
-			node.weights[j] =  getRandom(-0.2, 0.2); 
+			// node.weights[j] = getRandom(-0.2, 0.2);
+			// node.weights[j] = xavier_init(numberOfNodes, numberOfWeights);
+			node.weights[j] = he_init(numberOfWeights);
 
 		hidlayer->nodes[i] = node;
 	}
@@ -42,7 +51,7 @@ ConvLayer* convlayer(int numberOfFilters, int filtdim)
 		Filter filter;
 		for (int j = 0; j != filtdim; ++j) {
 			for (int k = 0; k != filtdim; ++k)
-				filter.weights[k*filtdim + j] = getRandom(-0.2, 0.2);
+				filter.weights[k * filtdim + j] = getRandom(-0.2, 0.2);
 		}
 		filter.bias = 0.1;//getRandom(-0.3, 0.3);
 		layer->filters[i] = filter;

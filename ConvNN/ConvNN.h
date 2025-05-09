@@ -18,7 +18,7 @@ public:
 	// 添加析構函數
 	~ConvNN();
 
-	void createConvNN(int numoffilters, int filtdim, int inpdim);
+	void createConvNN(int numoffilters, int filtdim, int inpdim, int pad);
 	void createFullyConnectedNN(std::vector<cl_int> &newNetVec, bool onlyFCNN, int inpdim);
 
 
@@ -78,7 +78,7 @@ private:
 	int pooldim;
 	int featmapdim;
 	int inputdim;
-
+	int padding;
 
 	void computeConvolution();
 	void pooling();
@@ -94,7 +94,7 @@ private:
 
 	cl_kernel compoutKern;
 	cl_kernel backpropoutKern;
-	cl_kernel bakckprophidKern;
+	cl_kernel backprophidKern;
 	cl_kernel cnnToFcnnKern;
 	cl_kernel rotate180Kern;
 	cl_kernel  softmaxKern;;

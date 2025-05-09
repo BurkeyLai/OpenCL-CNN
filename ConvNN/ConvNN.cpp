@@ -27,7 +27,7 @@ ConvNN::~ConvNN() {
 	if (backpropcnnKern) clReleaseKernel(backpropcnnKern);
 	if (compoutKern) clReleaseKernel(compoutKern);
 	if (backpropoutKern) clReleaseKernel(backpropoutKern);
-	if (bakckprophidKern) clReleaseKernel(bakckprophidKern);
+	if (backprophidKern) clReleaseKernel(backprophidKern);
 	if (cnnToFcnnKern) clReleaseKernel(cnnToFcnnKern);
 	if (rotate180Kern) clReleaseKernel(rotate180Kern);
 	if (softmaxKern) clReleaseKernel(softmaxKern);
@@ -63,7 +63,7 @@ void dumpBuffer(cl_mem buffer, int size)
 }
 
 ///Create the neural net as a vector of layers
-void ConvNN::createConvNN(int numoffilters, int filtdim, int inpdim)
+void ConvNN::createConvNN(int numoffilters, int filtdim, int inpdim, int pad = 0)
 {
 	///Create the input layer
 	cl_int err;
@@ -75,8 +75,11 @@ void ConvNN::createConvNN(int numoffilters, int filtdim, int inpdim)
 
 	///Create memory buffers
 	inputdim = inpdim; // 7
+	// inputdim = inpdim + 2 * pad; // 7
+	padding = pad;
 	filterdim = filtdim; // 7
-	featmapdim = inputdim - filterdim + 1; // 26
+	// featmapdim = inputdim - filterdim + 1; // 26
+	featmapdim = inpdim + 2 * padding - filtdim + 1;
 	pooldim = ((featmapdim - 2) / 2) + 1; // 13
 
 	d_InputBuffer = clCreateBuffer(OpenCL::clcontext, CL_MEM_READ_WRITE, sizeof(float) * inputdim * inputdim, NULL, &err);
@@ -159,7 +162,7 @@ void ConvNN::createFullyConnectedNN(std::vector<cl_int> &newNetVec, bool onlyFCN
 	///kernels
 	compoutKern = clCreateKernel(OpenCL::clprogram, "compout", &err);
 	backpropoutKern = clCreateKernel(OpenCL::clprogram, "backpropout", &err);
-	bakckprophidKern = clCreateKernel(OpenCL::clprogram, "backprophid", &err);
+	backprophidKern = clCreateKernel(OpenCL::clprogram, "backprophid", &err);
 }
 
 void ConvNN::train(std::vector<std::vector<float>> &inputs, std::vector<std::vector<float>> &targets, std::vector<std::vector<float>> &testinputs, std::vector<float> &testtargets ,int epoches)
@@ -174,9 +177,19 @@ void ConvNN::train(std::vector<std::vector<float>> &inputs, std::vector<std::vec
 		err = clEnqueueWriteBuffer(OpenCL::clqueue, d_targetBuffer, CL_TRUE, 0, sizeof(float) * h_netVec.back(), targets[i].data(), 0, NULL, NULL);
 		checkError(err, "EnqueueWriteBuffer");
 
-		///input
-		///forward
+		// ///input
+		// ///forward
+		// int img_dim = inputdim - 2 * padding;
+		// std::vector<float> padded_img(inputdim * inputdim, 0.0f);
+		// // copy image into center
+		// for (int y = 0; y < img_dim; y++) {
+		// 	for (int x = 0; x < img_dim; x++) {
+		// 		padded_img[(y + padding) * inputdim + (x + padding)] = inputs[i][y * img_dim + x];
+		// 	}
+		// }
+
 		err = clEnqueueWriteBuffer(OpenCL::clqueue, d_InputBuffer, CL_TRUE, 0, sizeof(float) * inputdim * inputdim, inputs[i].data(), 0, NULL, NULL);
+		// err = clEnqueueWriteBuffer(OpenCL::clqueue, d_InputBuffer, CL_TRUE, 0, sizeof(float) * inputdim * inputdim, padded_img.data(), 0, NULL, NULL);
 		checkError(err, "EnqueueWriteBuffer");
 
 		//std::cout << "convolve" << std::endl;
@@ -218,22 +231,22 @@ void ConvNN::train(std::vector<std::vector<float>> &inputs, std::vector<std::vec
 				err = clEnqueueNDRangeKernel(OpenCL::clqueue, backpropoutKern, 1, NULL, 
 					global_work_size, NULL, 0, NULL, NULL);
 			} else {
-				// bakckprophidKern.setArg(0, d_layersBuffers[l]);
-				// bakckprophidKern.setArg(1, d_layersBuffers[l - 1]);
-				// bakckprophidKern.setArg(2, d_layersBuffers[l + 1]);
-				// bakckprophidKern.setArg(3,h_netVec[l+1]);
-				// bakckprophidKern.setArg(4, lr);
-				err = clSetKernelArg(bakckprophidKern, 0, sizeof(cl_mem), &d_layersBuffers[l]);
-				err = clSetKernelArg(bakckprophidKern, 1, sizeof(cl_mem), &d_layersBuffers[l - 1]);
-				err = clSetKernelArg(bakckprophidKern, 2, sizeof(cl_mem), &d_layersBuffers[l + 1]);
-				err = clSetKernelArg(bakckprophidKern, 3, sizeof(cl_int), &h_netVec[l+1]);
-				err = clSetKernelArg(bakckprophidKern, 4, sizeof(float), &lr);
+				// backprophidKern.setArg(0, d_layersBuffers[l]);
+				// backprophidKern.setArg(1, d_layersBuffers[l - 1]);
+				// backprophidKern.setArg(2, d_layersBuffers[l + 1]);
+				// backprophidKern.setArg(3,h_netVec[l+1]);
+				// backprophidKern.setArg(4, lr);
+				err = clSetKernelArg(backprophidKern, 0, sizeof(cl_mem), &d_layersBuffers[l]);
+				err = clSetKernelArg(backprophidKern, 1, sizeof(cl_mem), &d_layersBuffers[l - 1]);
+				err = clSetKernelArg(backprophidKern, 2, sizeof(cl_mem), &d_layersBuffers[l + 1]);
+				err = clSetKernelArg(backprophidKern, 3, sizeof(cl_int), &h_netVec[l+1]);
+				err = clSetKernelArg(backprophidKern, 4, sizeof(float), &lr);
 
-				// err = (OpenCL::clqueue).enqueueNDRangeKernel(bakckprophidKern, cl::NullRange,
+				// err = (OpenCL::clqueue).enqueueNDRangeKernel(backprophidKern, cl::NullRange,
 				// 	cl::NDRange(h_netVec[l]),
 				// 	cl::NullRange);
 				size_t global_work_size[1] = {(size_t)h_netVec[l]};
-				err = clEnqueueNDRangeKernel(OpenCL::clqueue, bakckprophidKern, 1, NULL, 
+				err = clEnqueueNDRangeKernel(OpenCL::clqueue, backprophidKern, 1, NULL, 
 					global_work_size, NULL, 0, NULL, NULL);
 			}
 		}
@@ -292,8 +305,9 @@ void ConvNN::train(std::vector<std::vector<float>> &inputs, std::vector<std::vec
 		err = clSetKernelArg(backpropcnnKern, 3, sizeof(int), &featmapdim);
 		err = clSetKernelArg(backpropcnnKern, 4, sizeof(int), &inputdim);
 		err = clSetKernelArg(backpropcnnKern, 5, sizeof(int), &filterdim);
-		err = clSetKernelArg(backpropcnnKern, 6, sizeof(float), &lr);
-		err = clSetKernelArg(backpropcnnKern, 7, sizeof(cl_mem), &d_InputBuffer);
+		err = clSetKernelArg(backpropcnnKern, 6, sizeof(int), &padding);
+		err = clSetKernelArg(backpropcnnKern, 7, sizeof(float), &lr);
+		err = clSetKernelArg(backpropcnnKern, 8, sizeof(cl_mem), &d_InputBuffer);
 		size_t global_backpropcnn_size[3] = {(size_t)filterdim, (size_t)filterdim, (size_t)convLayer.numOfFilters};
 		err = clEnqueueNDRangeKernel(OpenCL::clqueue, backpropcnnKern, 3, NULL, 
 			global_backpropcnn_size, NULL, 0, NULL, NULL);
@@ -321,6 +335,7 @@ void ConvNN::computeConvolution() {
 	err = clSetKernelArg(convKern, 3, sizeof(int), &filterdim);
 	err = clSetKernelArg(convKern, 4, sizeof(int), &inputdim);
 	err = clSetKernelArg(convKern, 5, sizeof(int), &featmapdim);
+	err = clSetKernelArg(convKern, 6, sizeof(int), &padding);
 	size_t global_conv_size[3] = {(size_t)featmapdim, (size_t)featmapdim, (size_t)convLayer.numOfFilters};
 	err = clEnqueueNDRangeKernel(OpenCL::clqueue, convKern, 3, NULL, 
 		global_conv_size, NULL, 0, NULL, NULL);
@@ -579,12 +594,12 @@ void ConvNN::trainFCNN(std::vector<std::vector<float>> &inputs, std::vector<std:
 			else {
 
 
-				bakckprophidKern.setArg(0, d_layersBuffers[l]);
-				bakckprophidKern.setArg(1, d_layersBuffers[l - 1]);
-				bakckprophidKern.setArg(2, d_layersBuffers[l + 1]);
-				bakckprophidKern.setArg(3, h_netVec[l + 1]);
-				bakckprophidKern.setArg(4, lr);
-				err = (OpenCL::clqueue).enqueueNDRangeKernel(bakckprophidKern, cl::NullRange,
+				backprophidKern.setArg(0, d_layersBuffers[l]);
+				backprophidKern.setArg(1, d_layersBuffers[l - 1]);
+				backprophidKern.setArg(2, d_layersBuffers[l + 1]);
+				backprophidKern.setArg(3, h_netVec[l + 1]);
+				backprophidKern.setArg(4, lr);
+				err = (OpenCL::clqueue).enqueueNDRangeKernel(backprophidKern, cl::NullRange,
 					cl::NDRange(h_netVec[l]),
 					cl::NullRange);
 

@@ -33,3 +33,4 @@
 
 .DS_Store
 ConvNN/cifar-10-batches-bin
+ConvNN/mnist

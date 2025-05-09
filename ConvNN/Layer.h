@@ -11,7 +11,7 @@
 typedef struct Node {
 
 	int numberOfWeights;
-	float weights[1200];
+	float weights[10000];
 	float output;
 	float delta;
 
@@ -28,14 +28,14 @@ typedef struct Filter {
 typedef struct Layer {
 
 	int numOfNodes;
-	Node nodes[1200];
+	Node nodes[10000];
 
 }Layer;
 
 typedef struct ConvLayer {
 
 	int numOfFilters;
-	Filter filters[10];
+	Filter filters[128];
 
 }ConvLayer;
 
